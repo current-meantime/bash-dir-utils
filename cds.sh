@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# 'cd' to 'selected' = 'cds'
+# a simple way to change directories by selecting from a numbered list
 # usage: cds [dir number]
 # you can get the dir number by running 'lcd' if you don't know it
+# why the name? 'cd' to 'selected' = 'cds'
 
 cds() {
   target=$(ls -1 | sed -n "${1}p")
