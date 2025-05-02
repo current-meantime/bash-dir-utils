@@ -22,7 +22,7 @@ The utilities help with directory navigation and file management. You can list f
 
 ## Installation
 
-1. Download the utilities and save them to a directory, e.g., `~/bin/` or `~/scripts/`. Don't forget the `.sel_config`.
+1. Download the utilities and save them to a directory, e.g., `~/bin/` or `~/scripts/`.
 2. Make sure the utilities are executable:
 
     ```bash
