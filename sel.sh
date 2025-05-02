@@ -1,10 +1,15 @@
 #!/bin/bash
 
-# this script provides a simple way to select files or directories from the current directory.
-# it allows you to select an item by its number and store it in a variable.
-# usage: sel [item number]
-# example: sel 2
-# it's recommended to use this in combination with the 'lcd' utility
+# This script provides a simple way to select files or directories from the current directory.
+# It allows you to select an item by its line number and store it in a variable (by default 's')
+# to reuse it in other commands.
+
+# Usage: sel [item number] / s[item number][optional truncation suffix]
+# Example:
+# sel 2
+# echo $s2t
+
+# It's recommended to use this in combination with the 'lcd' utility
 # which lists files and directories with line numbers.
 
 # Load configuration
