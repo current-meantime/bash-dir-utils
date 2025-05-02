@@ -84,3 +84,6 @@ retrieve_history() {
 
   eval "$var_ref=\"$result\""
 }
+
+# Optional: allow $s0 to be the most recent
+alias "${VAR_NAME}0"="${VAR_NAME}"
