@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # 'cd' to 'selected' = 'cds'
 # usage: cds [dir number]
 # you can get the dir number by running 'lcd' if you don't know it
