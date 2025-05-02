@@ -7,7 +7,7 @@
 # it's recommended to use this in combination with the 'lcd' utility
 # which lists files and directories with line numbers.
 
-# load configuration
+# Load configuration
 if [ -f "$HOME/.sel_config" ]; then
   source "$HOME/.sel_config"
 else
@@ -15,55 +15,72 @@ else
   VAR_NAME="s"
   HISTORY_LIMIT=10
   HISTORY_ENABLED="on"
+  USE_FULL_PATH="on"
+  TRUNCATE_SUFFIX="t"
 fi
 
-# initialize history if enabled
+# Initialize history if enabled
 if [ "$HISTORY_ENABLED" == "on" ]; then
-  declare -a selected_items=()  # history of selected items
-  declare -i count=0            # counter for the number of selected items
+  declare -a selected_items=()  # History of selected items (truncated or full based on config)
+  declare -a full_items=()      # Full paths for every selected item
+  declare -i count=0            # Counter for selected items
 fi
 
-# function sel
+# Function sel
 sel() {
-  # exclude . and .., number files and directories
   selected_item=$(ls -1 | grep -vE '^\.$|^\.\.$' | sed -n "${1}p")
-  
-  # check if something was found
+
   if [ -z "$selected_item" ]; then
     echo "No item found for number: $1"
     return 1
   fi
-  
-  # add the selected item to the history if history is enabled
+
+  local full_path="$(realpath "$selected_item")"
+
   if [ "$HISTORY_ENABLED" == "on" ]; then
-    # add item to the history array
-    selected_items+=("$selected_item")
+    # Save based on config
+    if [ "$USE_FULL_PATH" == "on" ]; then
+      selected_items+=("$full_path")
+    else
+      selected_items+=("$selected_item")
+    fi
+    full_items+=("$full_path")
     count=$((count + 1))
 
-    # if we exceed the history limit, remove the oldest element
     if [ "$count" -gt "$HISTORY_LIMIT" ]; then
       selected_items=("${selected_items[@]:1}")
+      full_items=("${full_items[@]:1}")
       count=$((count - 1))
     fi
   fi
 
-  # assign selected item to the variable (e.g., s, s1, s2...)
-  eval "$VAR_NAME=\"$selected_item\""
-  
-  # confirmation
-  echo "Selected: $selected_item"
+  eval "$VAR_NAME=\"$selected_items[-1]\""
+  echo "Selected: ${selected_items[-1]}"
 }
 
-# function to retrieve item from history
+# Function to retrieve item from history
 retrieve_history() {
-  # argument is the history index (e.g., 0, 1, 2...)
-  local history_index=$1
-  
-  if [ -z "${selected_items[$history_index]}" ]; then
-    echo "No item in history for index $history_index"
+  local index="$1"
+  local suffix="$2"
+
+  if [ -z "${selected_items[$index]}" ]; then
+    echo "No item in history for index $index"
     return 1
   fi
-  
-  eval "$VAR_NAME=\"${selected_items[$history_index]}\""
-  echo "Retrieved: $VAR_NAME"
+
+  local result=""
+  local var_ref="${VAR_NAME}${index}"
+
+  if [ "$suffix" == "$TRUNCATE_SUFFIX" ]; then
+    result="${selected_items[$index]}"
+    echo "Using truncated path due to override: $result"
+  else
+    if [ "$USE_FULL_PATH" == "on" ]; then
+      result="${full_items[$index]}"
+    else
+      result="${selected_items[$index]}"
+    fi
+  fi
+
+  eval "$var_ref=\"$result\""
 }
