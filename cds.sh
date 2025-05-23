@@ -6,10 +6,20 @@
 # why the name? 'cd' to 'selected' = 'cds'
 
 cds() {
-  target=$(ls -1 | grep -vE '^\.$|^\.\.$' | sed -n "${1}p")
-  if [ -d "$target" ]; then
-    cd "$target"
+  local input="$1"
+
+  # If input is a number, use it as a list index
+  if [[ "$input" =~ ^[0-9]+$ ]]; then
+    local target=$(ls -1 | grep -vE '^\.$|^\.\.$' | sed -n "${input}p")
+    if [ -d "$target" ]; then
+      cd "$target"
+    else
+      echo "No directory found at position $input"
+    fi
+  # Otherwise, treat it as a direct path
+  elif [ -d "$input" ]; then
+    cd "$input"
   else
-    echo "No directory found at position $1"
+    echo "Invalid input: '$input' is not a valid directory or list index"
   fi
 }
