@@ -24,14 +24,20 @@ else
   TRUNCATE_SUFFIX="t"
 fi
 
-# Initialize history if enabled
-if [ "$HISTORY_ENABLED" == "on" ]; then
-  declare -a selected_items=()  # History of selected items (truncated or full based on config)
-  declare -a full_items=()      # Full paths for every selected item
-  declare -i count=0            # Counter for selected items
+# Ensure HISTORY_LIMIT is an integer
+if ! [[ "$HISTORY_LIMIT" =~ ^[0-9]+$ ]]; then
+  echo "Invalid HISTORY_LIMIT value. Defaulting to 10."
+  HISTORY_LIMIT=10
 fi
 
-# Function sel
+# Declare arrays conditionally
+if [ "$HISTORY_ENABLED" == "on" ]; then
+  declare -a selected_items=()
+  declare -a full_items=()
+  declare -i count=0
+fi
+
+# Define the sel function
 sel() {
   selected_item=$(ls -1 | grep -vE '^\.$|^\.\.$' | sed -n "${1}p")
 
@@ -43,12 +49,12 @@ sel() {
   local full_path="$(realpath "$selected_item")"
 
   if [ "$HISTORY_ENABLED" == "on" ]; then
-    # Save based on config
     if [ "$USE_FULL_PATH" == "on" ]; then
       selected_items+=("$full_path")
     else
       selected_items+=("$selected_item")
     fi
+
     full_items+=("$full_path")
     count=$((count + 1))
 
@@ -57,38 +63,30 @@ sel() {
       full_items=("${full_items[@]:1}")
       count=$((count - 1))
     fi
+
+    # Update all $s, $s0, $s1, etc. variables with bounds checking
+    for N in $(seq 0 $((HISTORY_LIMIT - 1))); do
+      if [ "$N" -lt "$count" ]; then
+        local idx=$((count - N - 1))
+        if [ "$idx" -ge 0 ] && [ "$idx" -lt "${#selected_items[@]}" ]; then
+          var_ref="${VAR_NAME}${N}"
+          if [ "$USE_FULL_PATH" == "on" ] && [ "$idx" -lt "${#full_items[@]}" ]; then
+            val="${full_items[$idx]}"
+          else
+            val="${selected_items[$idx]}"
+          fi
+          # Use eval safely to assign variable
+          eval "$var_ref"='$val'
+          if [ "$N" -eq 0 ]; then
+            eval "$VAR_NAME"='$val'
+          fi
+        fi
+      else
+        break
+      fi
+    done
   fi
 
-  eval "$VAR_NAME=\"$selected_items[-1]\""
-  echo "Selected: ${selected_items[-1]}"
+
+  echo "Selected: ${selected_item}"
 }
-
-# Function to retrieve item from history
-retrieve_history() {
-  local index="$1"
-  local suffix="$2"
-
-  if [ -z "${selected_items[$index]}" ]; then
-    echo "No item in history for index $index"
-    return 1
-  fi
-
-  local result=""
-  local var_ref="${VAR_NAME}${index}"
-
-  if [ "$suffix" == "$TRUNCATE_SUFFIX" ]; then
-    result="${selected_items[$index]}"
-    echo "Using truncated path due to override: $result"
-  else
-    if [ "$USE_FULL_PATH" == "on" ]; then
-      result="${full_items[$index]}"
-    else
-      result="${selected_items[$index]}"
-    fi
-  fi
-
-  eval "$var_ref=\"$result\""
-}
-
-# Optional: allow $s0 to be the most recent
-alias "${VAR_NAME}0"="${VAR_NAME}"
