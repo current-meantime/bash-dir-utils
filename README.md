@@ -91,7 +91,7 @@ echo $st      # Reference the same item with truncation
 sel 3         # Select item number 3
 echo $s1t     # Reference the PREVIOUSLY selected item (item 2 - from sel history) (relative path)
 cd ..
-cdx $s        # Reference item number 3 (the most recent seletion) and jump to this directory 
+cds $s        # Reference item number 3 (the most recent seletion) and jump to this directory 
 ```
 ### History Access
 You can reference earlier selections using:
