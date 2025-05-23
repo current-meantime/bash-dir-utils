@@ -6,10 +6,10 @@
 # why the name? 'cd' to 'selected' = 'cds'
 
 cds() {
-  target=$(ls -1 | sed -n "${1}p")
+  target=$(ls -1 | grep -vE '^\.$|^\.\.$' | sed -n "${1}p")
   if [ -d "$target" ]; then
     cd "$target"
   else
-    echo "No directory found with number: $1"
+    echo "No directory found at position $1"
   fi
 }
