@@ -5,5 +5,5 @@
 # suggested usage: in combination with 'cds' and 'sel' utils
 
 lcd() {
-  ls -1 "$@" | nl
+  ls -1 "$@" | grep -vE '^\.$|^\.\.$' | nl
 }
