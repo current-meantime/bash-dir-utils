@@ -62,6 +62,22 @@ function retrieve_history() {
 
 # Define sel function
 function sel() {
+  # Handle flags first
+  if [[ "$1" == "-s" || "$1" == "-show" ]]; then
+    if [ "$count" -eq 0 ]; then
+      echo "No selection history available."
+      return
+    fi
+
+    echo "Selection history (1 = latest):"
+    for ((i = count - 1; i >= 0; i--)); do
+      full_path="${full_items[$i]}"
+      filename="${full_path##*/}"
+      printf "%2d. %-20s %s\n" "$((count - i))" "$filename" "$full_path"
+    done
+    return
+  fi
+
   selected_item=$(ls -1 | grep -vE '^\.$|^\.\.$' | sed -n "${1}p")
   if [ -z "$selected_item" ]; then
     echo "No item found for number: $1"
@@ -87,33 +103,32 @@ function sel() {
       count=$((count - 1))
     fi
 
-    # Set $s, $s0, $s1, etc., and truncated versions
-    for N in $(seq 0 $((HISTORY_LIMIT - 1))); do
-      if [ "$N" -lt "$count" ]; then
-        local idx=$((count - N - 1))
-        if [ "$idx" -ge 0 ] && [ "$idx" -lt "${#selected_items[@]}" ]; then
-          var_ref="${VAR_NAME}${N}"
-          val="${full_items[$idx]}"
-          eval "$var_ref"='$val'
+    # Set $s, $s1, $s2, etc., and truncated versions
+    for N in $(seq 1 $HISTORY_LIMIT); do
+      local history_index=$((N - 1))
+      if [ "$history_index" -lt "$count" ]; then
+        local array_index=$((count - 1 - history_index))
+        val="${full_items[$array_index]}"
 
-          # Set base variable ($s) and truncated base variable ($st)
-          if [ "$N" -eq 0 ]; then
-            eval "$VAR_NAME"='$val'
+        var_ref="${VAR_NAME}${N}"
+        eval "$var_ref"='$val'
 
-            if [ -n "$TRUNCATE_SUFFIX" ]; then
-              truncated_val=$(retrieve_history 0 "$TRUNCATE_SUFFIX")
-              eval "${VAR_NAME}${TRUNCATE_SUFFIX}"='$truncated_val'
-            fi
-          fi
+        # Set base variable ($s) = latest selection
+        if [ "$N" -eq 1 ]; then
+          eval "$VAR_NAME"='$val'
 
-          # Generate truncated indexed variables ($s0t, $s1t, etc.)
+          # Set truncated base variable ($st)
           if [ -n "$TRUNCATE_SUFFIX" ]; then
-            truncated_val=$(retrieve_history "$N" "$TRUNCATE_SUFFIX")
-            eval "${var_ref}${TRUNCATE_SUFFIX}"='$truncated_val'
+            truncated_val=$(retrieve_history 0 "$TRUNCATE_SUFFIX")
+            eval "${VAR_NAME}${TRUNCATE_SUFFIX}"='$truncated_val'
           fi
         fi
-      else
-        break
+
+        # Set truncated indexed variables ($s1t, $s2t, etc.)
+        if [ -n "$TRUNCATE_SUFFIX" ]; then
+          truncated_val=$(retrieve_history "$history_index" "$TRUNCATE_SUFFIX")
+          eval "${var_ref}${TRUNCATE_SUFFIX}"='$truncated_val'
+        fi
       fi
     done
   fi
