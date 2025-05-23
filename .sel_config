@@ -1,3 +1,4 @@
+
 VAR_NAME="s"           # Base name of the variable to store selections
 HISTORY_LIMIT=10       # Max number of recent selections to store
 HISTORY_ENABLED="on"   # Enable/disable history
